@@ -110,13 +110,13 @@ function formatTemplateComponents(
   const dynamicBodyComponent = dynamicComponents.find((c) => c.type === 'BODY');
   const staticBodyComponent = staticComponents.find((c: any) => c.type === 'BODY');
   const bodyComponent = dynamicBodyComponent || staticBodyComponent;
-  if (bodyComponent?.text) {
-    const bodyText = (bodyComponent as any).text;
+  if (bodyComponent && 'text' in bodyComponent && bodyComponent.text) {
+    const bodyText = bodyComponent.text;
     const variableRegex = /\{\{([^}]+)\}\}/g;
-    const variableMatches = Array.from(bodyText.matchAll(variableRegex));
+    const variableMatches = Array.from(bodyText.matchAll(variableRegex)) as RegExpMatchArray[];
     
     const orderedVariables = Array.from(
-      new Set(variableMatches.map((match) => match[1].trim()))
+      new Set(variableMatches.map((match: RegExpMatchArray) => match[1].trim()))
     );
 
     const bodyParams: any[] = [];

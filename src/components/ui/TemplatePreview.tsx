@@ -50,9 +50,9 @@ export default function TemplatePreview({
 
   // Extrair variáveis do texto usando regex - captura qualquer conteúdo entre {{ }}
   const variableRegex = /\{\{([^}]+)\}\}/g;
-  const variableMatches = Array.from(bodyText.matchAll(variableRegex));
+  const variableMatches = Array.from(bodyText.matchAll(variableRegex)) as RegExpMatchArray[];
   const uniqueVariables = Array.from(
-    new Set(variableMatches.map((match) => match[1].trim()))
+    new Set(variableMatches.map((match: RegExpMatchArray) => match[1].trim()))
   );
 
   // Gerar mensagem final com variáveis substituídas
@@ -285,7 +285,7 @@ export default function TemplatePreview({
     const parts: (string | React.ReactNode)[] = [];
     let lastIndex = 0;
 
-    variableMatches.forEach((match) => {
+    variableMatches.forEach((match: RegExpMatchArray) => {
       const matchIndex = match.index!;
       const varKey = match[1].trim(); // Remover espaços em branco
 

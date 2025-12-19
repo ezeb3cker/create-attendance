@@ -47,8 +47,10 @@ declare global {
       [key: string]: any;
     };
     WlExtension?: {
-      getInfoUser: () => Promise<UserInfo> | UserInfo;
-      getInfoChannels: () => Promise<any[]> | any[];
+      getInfoUser?: () => Promise<UserInfo> | UserInfo;
+      getInfoChannels?: () => Promise<any[]> | any[];
+      closeModal?: (options?: {}) => void;
+      alert?: (options: { message: string; variant: 'success' | 'error' | 'warning' }) => void;
       [key: string]: any;
     };
   }

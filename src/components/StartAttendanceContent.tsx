@@ -2,17 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchChannels, fetchSectors, fetchTemplates, startAttendance, startAttendanceNumber } from '../services/api';
 import type { Channel, Sector, Template, StartAttendanceData } from '../types';
 import SelectWithSearch from './ui/SelectWithSearch';
-import PhoneInput from './ui/PhoneInput';
 import TemplatePreview from './ui/TemplatePreview';
 
-declare global {
-  interface Window {
-    WlExtension?: {
-      closeModal: (options?: {}) => void;
-      alert: (options: { message: string; variant: 'success' | 'error' | 'warning' }) => void;
-    };
-  }
-}
+// WlExtension type is declared in src/types/extension.ts
 
 const DDI_OPTIONS = [
   { code: '52', flag: '🇲🇽', name: 'México' },
@@ -122,7 +114,8 @@ export default function StartAttendanceContent({
     };
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'BUTTON' && (target.type === 'submit' || target.textContent?.trim() === 'OK')) {
+      const button = target as HTMLButtonElement;
+      if (target.tagName === 'BUTTON' && ((button.type === 'submit' || button.type === 'button') || target.textContent?.trim() === 'OK')) {
         const isOkButton = target === okButtonRef.current || target.closest('button[ref]') === okButtonRef.current;
 
         if (isOkButton && !isUserClickRef.current) {

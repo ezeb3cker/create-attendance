@@ -4,15 +4,7 @@ import type { Channel, Sector, Template, StartAttendanceData } from '../types';
 import SelectWithSearch from './ui/SelectWithSearch';
 import TemplatePreview from './ui/TemplatePreview';
 
-// Declaração de tipo para a biblioteca WlExtension
-declare global {
-  interface Window {
-    WlExtension?: {
-      closeModal: (options?: {}) => void;
-      alert: (options: { message: string; variant: 'success' | 'error' | 'warning' }) => void;
-    };
-  }
-}
+// WlExtension type is declared in src/types/extension.ts
 
 const DDI_OPTIONS = [
   { code: '52', flag: '🇲🇽', name: 'México' },
@@ -266,7 +258,7 @@ export default function StartAttendanceModal({
           const variableRegex = /\{\{([^}]+)\}\}/g;
           const variableMatches = Array.from(bodyText.matchAll(variableRegex)) as RegExpMatchArray[];
           const orderedVariables = Array.from(
-            new Set(variableMatches.map((match) => match[1].trim()))
+            new Set(variableMatches.map((match: RegExpMatchArray) => match[1].trim()))
           );
           
           const varValues = orderedVariables
@@ -319,7 +311,7 @@ export default function StartAttendanceModal({
     // Enviar dados para o endpoint
     try {
       setError(null);
-      const response = await startAttendance(data, selectedTemplate);
+      await startAttendance(data, selectedTemplate);
       onSubmit(data);
     } catch (error: any) {
       setError(error.message || 'Erro ao iniciar atendimento. Tente novamente.');
@@ -858,8 +850,8 @@ export default function StartAttendanceModal({
                   const staticBodyComponent = selectedTemplate.staticComponents?.find((c: any) => c.type === 'BODY');
                   const bodyText = (dynamicBodyComponent?.text || (staticBodyComponent as any)?.text) || '';
                   const variableRegex = /\{\{([^}]+)\}\}/g;
-                  const variableMatches = Array.from(bodyText.matchAll(variableRegex));
-                  const orderedVariables = Array.from(
+                  const variableMatches = Array.from(bodyText.matchAll(variableRegex)) as RegExpMatchArray[];
+                  const orderedVariables: string[] = Array.from(
                     new Set(variableMatches.map((match: RegExpMatchArray) => match[1].trim()))
                   );
                   return orderedVariables.map(key => templateVariables[key] || `variavel${key}`).join(',');
@@ -882,7 +874,7 @@ export default function StartAttendanceModal({
                   const staticBodyComponent = selectedTemplate.staticComponents?.find((c: any) => c.type === 'BODY');
                   const bodyText = (dynamicBodyComponent?.text || (staticBodyComponent as any)?.text) || '';
                   const variableRegex = /\{\{([^}]+)\}\}/g;
-                  const variableMatches = Array.from(bodyText.matchAll(variableRegex));
+                  const variableMatches = Array.from(bodyText.matchAll(variableRegex)) as RegExpMatchArray[];
                   const orderedVariables = Array.from(
                     new Set(variableMatches.map((match: RegExpMatchArray) => match[1].trim()))
                   );
