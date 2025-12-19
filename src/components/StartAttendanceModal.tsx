@@ -85,23 +85,27 @@ export default function StartAttendanceModal({
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar canais ao abrir o modal
-  useEffect(() => {if (isOpen && channels.length === 0) {loadChannels();
+  useEffect(() => {
+    if (isOpen && channels.length === 0) {
+      loadChannels();
     }
   }, [isOpen]);
 
-  // Quando selecionar um canal, buscar setores
-  useEffect(() => {if (selectedChannel) {loadSectors(selectedChannel.canalId);
-      // DDI sempre será 55 por padrão
+  useEffect(() => {
+    if (selectedChannel) {
+      loadSectors(selectedChannel.canalId);
       setPhoneDDI('55');
-    } else {setSectors([]);
+    } else {
+      setSectors([]);
       setSelectedSector(null);
     }
   }, [selectedChannel]);
 
-  // Quando switch ligar, buscar templates
-  useEffect(() => {if (sendQuickMessage && selectedChannel && selectedChannel.type === 4) {loadTemplates(selectedChannel.canalId);
-    } else {setTemplates([]);
+  useEffect(() => {
+    if (sendQuickMessage && selectedChannel && selectedChannel.type === 4) {
+      loadTemplates(selectedChannel.canalId);
+    } else {
+      setTemplates([]);
       setSelectedTemplate(null);
       setTemplateImageFile(null);
       setTemplateVideoFile(null);
@@ -114,13 +118,10 @@ export default function StartAttendanceModal({
     }
   }, [sendQuickMessage, selectedChannel]);
 
-  // Monitorar mudanças no selectedSector
   useEffect(() => {}, [selectedSector, selectedChannel]);
 
-  // Monitorar mudanças no isDDIOpen
   useEffect(() => {}, [isDDIOpen, selectedChannel]);
 
-  // Fechar dropdown de DDI ao clicar fora
   useEffect(() => {
     if (!isDDIOpen) return;
 
@@ -130,15 +131,14 @@ export default function StartAttendanceModal({
 
       const ddiButton = target.closest('[data-ddi-selector]');
       const ddiDropdown = target.closest('[data-ddi-dropdown]');
-      // Não fechar se clicar em qualquer input, select ou dropdown de setor/template
       const isSectorInput = target.closest('[data-sector-select]');
       const isTemplateInput = target.closest('[data-template-select]');
-      // Não fechar se clicar em qualquer dropdown aberto
-      const isAnyDropdown = target.closest('[data-dropdown]');if (!ddiButton && !ddiDropdown && !isSectorInput && !isTemplateInput && !isAnyDropdown) {setIsDDIOpen(false);
+      const isAnyDropdown = target.closest('[data-dropdown]');
+      if (!ddiButton && !ddiDropdown && !isSectorInput && !isTemplateInput && !isAnyDropdown) {
+        setIsDDIOpen(false);
       }
     }
 
-    // Usar capture phase para garantir que seja executado antes de outros handlers
     document.addEventListener('mousedown', handleClickOutside, true);
 
     return () => {
@@ -153,23 +153,29 @@ export default function StartAttendanceModal({
       const data = await fetchChannels();
       setChannels(data);
     } catch (err) {
-      setError('Erro ao carregar canais. Tente novamente.');} finally {
+      setError('Erro ao carregar canais. Tente novamente.');
+    } finally {
       setLoadingChannels(false);
     }
   };
 
-  const loadSectors = async (canalId: string) => {if (!selectedChannel) {return;
+  const loadSectors = async (canalId: string) => {
+    if (!selectedChannel) {
+      return;
     }
     setLoadingSectors(true);
     setError(null);
     try {
-      const data = await fetchSectors(canalId);// Filtrar setores por organizationId
+      const data = await fetchSectors(canalId);
       const filtered = data.filter(
         (sector) => sector.organizationId === selectedChannel.organizacaoId
-      );setSectors(filtered);
-    } catch (err) {setError('Erro ao carregar setores. Tente novamente.');
+      );
+      setSectors(filtered);
+    } catch (err) {
+      setError('Erro ao carregar setores. Tente novamente.');
     } finally {
-      setLoadingSectors(false);}
+      setLoadingSectors(false);
+    }
   };
 
   const loadTemplates = async (canalId: string) => {
@@ -179,12 +185,14 @@ export default function StartAttendanceModal({
       const data = await fetchTemplates(canalId);
       setTemplates(data);
     } catch (err) {
-      setError('Erro ao carregar templates. Tente novamente.');} finally {
+      setError('Erro ao carregar templates. Tente novamente.');
+    } finally {
       setLoadingTemplates(false);
     }
   };
 
-  const handleChannelSelect = (channel: Channel | null) => {setSelectedChannel(channel);
+  const handleChannelSelect = (channel: Channel | null) => {
+    setSelectedChannel(channel);
     setSelectedSector(null);
     setSendQuickMessage(false);
     setSelectedTemplate(null);
@@ -311,13 +319,14 @@ export default function StartAttendanceModal({
     // Enviar dados para o endpoint
     try {
       setError(null);
-      const response = await startAttendance(data, selectedTemplate);// Se houver callback onSubmit, também chamar
+      const response = await startAttendance(data, selectedTemplate);
       onSubmit(data);
-    } catch (error: any) {setError(error.message || 'Erro ao iniciar atendimento. Tente novamente.');
+    } catch (error: any) {
+      setError(error.message || 'Erro ao iniciar atendimento. Tente novamente.');
     }
   };
 
-  const handleClose = () => {// Resetar estados
+  const handleClose = () => {
     setSelectedChannel(null);
     setSelectedSector(null);
     setSendQuickMessage(false);
@@ -340,7 +349,6 @@ export default function StartAttendanceModal({
     onClose();
   };
 
-  // Log quando o componente renderiza
   useEffect(() => {});
 
   if (!isOpen) return null;
@@ -355,23 +363,24 @@ export default function StartAttendanceModal({
       sector.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Fechar dropdown ao clicar fora
     useEffect(() => {
       function handleClickOutside(event: MouseEvent) {
         const target = event.target as Node;
-        const isInside = containerRef.current?.contains(target);?.tagName
-        });
-        if (containerRef.current && !isInside) {setIsOpen(false);
+        const isInside = containerRef.current?.contains(target);
+        if (containerRef.current && !isInside) {
+          setIsOpen(false);
           if (!selectedSector) {
             setSearchTerm('');
           }
         }
       }
 
-      if (isOpen) {document.addEventListener('mousedown', handleClickOutside);
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
       }
 
-      return () => {document.removeEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
       };
     }, [isOpen, selectedSector]);
 
@@ -485,7 +494,6 @@ export default function StartAttendanceModal({
       template.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Fechar dropdown ao clicar fora
     useEffect(() => {
       function handleClickOutside(event: MouseEvent) {
         if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -696,11 +704,13 @@ export default function StartAttendanceModal({
               <button
                 type="button"
                 data-ddi-selector
-                onClick={(e) => {e.preventDefault();
+                onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  // Só abrir/fechar se o clique foi diretamente no botão
                   const target = e.target as HTMLElement;
-                  const isDirectClick = target.closest('[data-ddi-selector]') === e.currentTarget;if (selectedChannel && isDirectClick) {setIsDDIOpen(!isDDIOpen);
+                  const isDirectClick = target.closest('[data-ddi-selector]') === e.currentTarget;
+                  if (selectedChannel && isDirectClick) {
+                    setIsDDIOpen(!isDDIOpen);
                   }
                 }}
                 onMouseDown={(e) => {
