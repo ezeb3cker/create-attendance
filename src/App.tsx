@@ -14,28 +14,10 @@ function App() {
     // Prevenir recarregamento acidental da página
     const handleBeforeUnload = () => {
       // Não bloquear, apenas logar para debug
-      console.log('BeforeUnload event detected');
+      console.log('BeforeUnload event detected - dados preservados no sessionStorage');
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Listener para eventos do WlExtension que possam causar recarregamento
-    if (window.WlExtension) {
-      // Verificar se há algum evento de recarregamento
-      let reloadBlocked = false;
-      
-      window.location.reload = function() {
-        if (!reloadBlocked) {
-          console.log('Reload detectado - dados preservados no sessionStorage');
-          reloadBlocked = true;
-          // Permitir reload apenas se for explícito (não automático)
-          setTimeout(() => {
-            reloadBlocked = false;
-          }, 1000);
-        }
-        // Não bloquear completamente, apenas logar
-      };
-    }
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
