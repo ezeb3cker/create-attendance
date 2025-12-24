@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     // Prevenir recarregamento acidental da página
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = () => {
       // Não bloquear, apenas logar para debug
       console.log('BeforeUnload event detected');
     };
@@ -22,10 +22,9 @@ function App() {
     // Listener para eventos do WlExtension que possam causar recarregamento
     if (window.WlExtension) {
       // Verificar se há algum evento de recarregamento
-      const originalReload = window.location.reload;
       let reloadBlocked = false;
       
-      window.location.reload = function(...args) {
+      window.location.reload = function() {
         if (!reloadBlocked) {
           console.log('Reload detectado - dados preservados no sessionStorage');
           reloadBlocked = true;
@@ -35,7 +34,6 @@ function App() {
           }, 1000);
         }
         // Não bloquear completamente, apenas logar
-        // originalReload.apply(window.location, args);
       };
     }
 
