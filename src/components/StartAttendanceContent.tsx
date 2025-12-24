@@ -3,6 +3,7 @@ import { fetchChannels, fetchSectors, fetchTemplates, startAttendance, startAtte
 import type { Channel, Sector, Template, StartAttendanceData } from '../types';
 import SelectWithSearch from './ui/SelectWithSearch';
 import TemplatePreview from './ui/TemplatePreview';
+import { usePersistedState } from '../hooks/usePersistedState';
 
 // WlExtension type is declared in src/types/extension.ts
 
@@ -45,10 +46,23 @@ export default function StartAttendanceContent({
   onTemplateChange,
 }: StartAttendanceContentProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
+  // Estados persistidos para manter dados após recarregamento
+  const [selectedChannelId, setSelectedChannelId] = usePersistedState<string | null>('attendance_channelId', null);
+  const [selectedSectorId, setSelectedSectorId] = usePersistedState<string | null>('attendance_sectorId', null);
+  const [sendQuickMessage, setSendQuickMessage] = usePersistedState<boolean>('attendance_sendQuickMessage', false);
+  const [selectedTemplateId, setSelectedTemplateId] = usePersistedState<string | null>('attendance_templateId', null);
+  const [phoneDDI, setPhoneDDI] = usePersistedState<string>('attendance_phoneDDI', '55');
+  const [phoneNumber, setPhoneNumber] = usePersistedState<string>('attendance_phoneNumber', '');
+  const [phoneType, setPhoneType] = usePersistedState<'numero' | 'lista' | 'csv'>('attendance_phoneType', 'numero');
+  const [phoneList, setPhoneList] = usePersistedState<string>('attendance_phoneList', '');
+  const [message, setMessage] = usePersistedState<string>('attendance_message', '');
+  const [templateVariables, setTemplateVariables] = usePersistedState<Record<string, string>>('attendance_templateVariables', {});
+  const [templateButtonValues, setTemplateButtonValues] = usePersistedState<Record<string, string>>('attendance_templateButtonValues', {});
+  
+  // Estados locais (não persistidos)
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
-  const [sendQuickMessage, setSendQuickMessage] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateImageFile, setTemplateImageFile] = useState<File | null>(null);
@@ -57,14 +71,7 @@ export default function StartAttendanceContent({
   const [templateImageUrl, setTemplateImageUrl] = useState<string | null>(null);
   const [templateVideoUrl, setTemplateVideoUrl] = useState<string | null>(null);
   const [templateDocumentUrl, setTemplateDocumentUrl] = useState<string | null>(null);
-  const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
-  const [templateButtonValues, setTemplateButtonValues] = useState<Record<string, string>>({});
-  const [phoneDDI, setPhoneDDI] = useState('55'); 
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneType, setPhoneType] = useState<'numero' | 'lista' | 'csv'>('numero');
-  const [phoneList, setPhoneList] = useState<string>('');
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [message, setMessage] = useState('');
   const [isMessageFocused, setIsMessageFocused] = useState(false);
   const [isDDIOpen, setIsDDIOpen] = useState(false);
   const [isPhoneFocused, setIsPhoneFocused] = useState(false);
@@ -86,6 +93,43 @@ export default function StartAttendanceContent({
 
   const sectorsCacheRef = useRef<Record<string, Sector[]>>({});
   const templatesCacheRef = useRef<Record<string, Template[]>>({});
+
+  // Restaurar estados quando os dados são carregados
+  useEffect(() => {
+    if (channels.length > 0 && selectedChannelId && !selectedChannel) {
+      const channel = channels.find(c => c.canalId === selectedChannelId);
+      if (channel) {
+        setSelectedChannel(channel);
+      } else {
+        // Se o canal não foi encontrado, limpar o ID persistido
+        setSelectedChannelId(null);
+      }
+    }
+  }, [channels, selectedChannelId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (sectors.length > 0 && selectedSectorId && !selectedSector) {
+      const sector = sectors.find(s => s.id === selectedSectorId);
+      if (sector) {
+        setSelectedSector(sector);
+      } else {
+        // Se o setor não foi encontrado, limpar o ID persistido
+        setSelectedSectorId(null);
+      }
+    }
+  }, [sectors, selectedSectorId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (templates.length > 0 && selectedTemplateId && !selectedTemplate) {
+      const template = templates.find(t => t.id === selectedTemplateId);
+      if (template) {
+        setSelectedTemplate(template);
+      } else {
+        // Se o template não foi encontrado, limpar o ID persistido
+        setSelectedTemplateId(null);
+      }
+    }
+  }, [templates, selectedTemplateId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!channelsLoadedRef.current) {
@@ -145,8 +189,10 @@ export default function StartAttendanceContent({
   useEffect(() => {
     if (!selectedChannel) {setSectors([]);
       setSelectedSector(null);
+      setSelectedSectorId(null);
       setTemplates([]);
       setSelectedTemplate(null);
+      setSelectedTemplateId(null);
       onTemplateChange?.(false);
       if (isDDIOpen) {
         setIsDDIOpen(false);
@@ -306,10 +352,13 @@ export default function StartAttendanceContent({
 
   const handleChannelSelect = (channel: Channel | null) => {
     setSelectedChannel(channel);
+    setSelectedChannelId(channel?.canalId || null);
     setSelectedSector(null);
+    setSelectedSectorId(null);
     setSectors([]);
     setSendQuickMessage(channel?.type === 4);
     setSelectedTemplate(null);
+    setSelectedTemplateId(null);
     setTemplates([]);
     setTemplateImageFile(null);
     setTemplateVideoFile(null);
@@ -320,19 +369,21 @@ export default function StartAttendanceContent({
     setTemplateVariables({});
     setTemplateButtonValues({});
     setMessage('');
-    onTemplateChange?.(false);};
+    onTemplateChange?.(false);
+  };
 
   const handleTemplateSelect = (template: Template | null) => {
     setSelectedTemplate(template);
+    setSelectedTemplateId(template?.id || null);
     setTemplateImageFile(null);
     setTemplateVideoFile(null);
     setTemplateDocumentFile(null);
     setTemplateImageUrl(null);
     setTemplateVideoUrl(null);
     setTemplateDocumentUrl(null);
-    setTemplateVariables({});
-    setTemplateButtonValues({});
     if (!template) {
+      setTemplateVariables({});
+      setTemplateButtonValues({});
       setMessage('');
     }
     if (template && selectedChannel && selectedChannel.type === 4) {
@@ -749,6 +800,19 @@ export default function StartAttendanceContent({
         }
       }
 
+      // Limpar dados persistidos após envio bem-sucedido
+      setSelectedChannelId(null);
+      setSelectedSectorId(null);
+      setSelectedTemplateId(null);
+      setPhoneDDI('55');
+      setPhoneNumber('');
+      setPhoneType('numero');
+      setPhoneList('');
+      setMessage('');
+      setTemplateVariables({});
+      setTemplateButtonValues({});
+      setSendQuickMessage(false);
+
       if (window.WlExtension?.closeModal) {
         window.WlExtension.closeModal({});
       }
@@ -864,6 +928,7 @@ export default function StartAttendanceContent({
                     e.preventDefault();
                     e.stopPropagation();
                     setSelectedSector(sector);
+                    setSelectedSectorId(sector.id);
                     setIsOpen(false);
                     setOpenDropdown(null);
                     setSearchTerm('');
@@ -1311,9 +1376,12 @@ export default function StartAttendanceContent({
               return;
             }
             setSelectedChannel(null);
+            setSelectedChannelId(null);
             setSelectedSector(null);
+            setSelectedSectorId(null);
             setSendQuickMessage(false);
             setSelectedTemplate(null);
+            setSelectedTemplateId(null);
             setTemplateImageFile(null);
             setTemplateVideoFile(null);
             setTemplateDocumentFile(null);
