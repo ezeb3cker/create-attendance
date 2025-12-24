@@ -91,6 +91,7 @@ export default function StartAttendanceContent({
   const isUserClickRef = useRef(false);
   const channelsLoadedRef = useRef(false);
   const isCancelClickRef = useRef(false);
+  const isDDIClickRef = useRef(false);
 
   const sectorsCacheRef = useRef<Record<string, Sector[]>>({});
   const templatesCacheRef = useRef<Record<string, Template[]>>({});
@@ -225,8 +226,12 @@ export default function StartAttendanceContent({
       onTemplateChange?.(false);
     }
 
-    if (isDDIOpen) {setIsDDIOpen(false);
+    // Sempre fechar o DDI quando o canal mudar
+    if (isDDIOpen) {
+      setIsDDIOpen(false);
     }
+    // Resetar a flag de clique do DDI quando o canal mudar
+    isDDIClickRef.current = false;
   }, [selectedChannel?.canalId]);
 
   useEffect(() => {
@@ -1134,12 +1139,34 @@ export default function StartAttendanceContent({
         <div className="relative w-32 flex-shrink-0">
           <button
             type="button"
-            onClick={(e) => {e.preventDefault();
+            onMouseDown={(e) => {
+              isDDIClickRef.current = true;
               e.stopPropagation();
-              if (selectedChannel) {setIsDDIOpen(!isDDIOpen);
-              } else {}
             }}
-            onMouseDown={(e) => {e.stopPropagation();
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              // Só abrir/fechar se for um clique real do usuário
+              if (!isDDIClickRef.current || !selectedChannel) {
+                isDDIClickRef.current = false;
+                return;
+              }
+              
+              setIsDDIOpen(!isDDIOpen);
+              
+              // Resetar a flag após um pequeno delay
+              setTimeout(() => {
+                isDDIClickRef.current = false;
+              }, 100);
+            }}
+            onBlur={() => {
+              // Fechar o DDI quando perder o foco, mas apenas se não foi um clique interno
+              setTimeout(() => {
+                if (!isDDIClickRef.current) {
+                  setIsDDIOpen(false);
+                }
+              }, 200);
             }}
             disabled={!selectedChannel}
             className="w-full px-4 py-3 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:bg-gray-50 disabled:cursor-not-allowed flex items-center justify-between"
