@@ -90,6 +90,7 @@ export default function StartAttendanceContent({
   const okButtonRef = useRef<HTMLButtonElement>(null);
   const isUserClickRef = useRef(false);
   const channelsLoadedRef = useRef(false);
+  const isCancelClickRef = useRef(false);
 
   const sectorsCacheRef = useRef<Record<string, Sector[]>>({});
   const templatesCacheRef = useRef<Record<string, Template[]>>({});
@@ -1368,40 +1369,63 @@ export default function StartAttendanceContent({
       <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
         <button
           type="button"
+          onMouseDown={(e) => {
+            isCancelClickRef.current = true;
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            const button = e.currentTarget as HTMLButtonElement;
-            if (button.textContent?.trim() !== 'CANCELAR') {
+            
+            // Só processar se for um clique real do usuário
+            if (!isCancelClickRef.current) {
               return;
             }
-            setSelectedChannel(null);
+            
+            const button = e.currentTarget as HTMLButtonElement;
+            if (button.textContent?.trim() !== 'CANCELAR') {
+              isCancelClickRef.current = false;
+              return;
+            }
+            
+            // Limpar apenas os dados persistidos
+            // O closeModal será chamado apenas quando o usuário realmente quiser fechar
+            // Não chamamos aqui para evitar que recarregamentos automáticos fechem o modal
             setSelectedChannelId(null);
-            setSelectedSector(null);
             setSelectedSectorId(null);
-            setSendQuickMessage(false);
-            setSelectedTemplate(null);
             setSelectedTemplateId(null);
+            setPhoneDDI('55');
+            setPhoneNumber('');
+            setPhoneType('numero');
+            setPhoneList('');
+            setMessage('');
+            setTemplateVariables({});
+            setTemplateButtonValues({});
+            setSendQuickMessage(false);
+            
+            // Limpar estados locais também
+            setSelectedChannel(null);
+            setSelectedSector(null);
+            setSelectedTemplate(null);
             setTemplateImageFile(null);
             setTemplateVideoFile(null);
             setTemplateDocumentFile(null);
             setTemplateImageUrl(null);
             setTemplateVideoUrl(null);
             setTemplateDocumentUrl(null);
-            setTemplateVariables({});
-            setPhoneDDI('55');
-            setPhoneNumber('');
-            setPhoneType('numero');
-            setPhoneList('');
             setCsvFile(null);
-            setMessage('');
             setError(null);
             onTemplateChange?.(false);
             
-            // Fechar o modal
-            if (window.WlExtension?.closeModal) {
-              window.WlExtension.closeModal({});
-            }
+            // Resetar a flag após um delay para evitar chamadas duplicadas
+            setTimeout(() => {
+              isCancelClickRef.current = false;
+              // Fechar o modal apenas após limpar os dados e confirmar que foi um clique real
+              if (window.WlExtension?.closeModal) {
+                window.WlExtension.closeModal({});
+              }
+            }, 50);
           }}
           className="px-6 py-2.5 text-sm font-normal text-text-primary bg-transparent border border-border rounded-lg hover:bg-gray-50 transition-colors"
         >
