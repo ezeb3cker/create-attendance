@@ -1397,6 +1397,11 @@ export default function StartAttendanceContent({
             setMessage('');
             setError(null);
             onTemplateChange?.(false);
+            
+            // Fechar o modal
+            if (window.WlExtension?.closeModal) {
+              window.WlExtension.closeModal({});
+            }
           }}
           className="px-6 py-2.5 text-sm font-normal text-text-primary bg-transparent border border-border rounded-lg hover:bg-gray-50 transition-colors"
         >
