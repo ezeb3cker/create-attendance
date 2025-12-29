@@ -201,11 +201,10 @@ export default function StartAttendanceContent({
       }
       return;
     }
-    const sectorsCacheKey = `${selectedChannel.canalId}_${selectedChannel.organizacaoId}`;
-    if (sectorsCacheRef.current[sectorsCacheKey]) {setSectors(sectorsCacheRef.current[sectorsCacheKey]);
-    } else {
-      loadSectors(selectedChannel.canalId);
-    }
+    
+    // Sempre buscar os setores quando o canal mudar
+    // Se não houver cache, buscará da API; se houver cache, usará e restaurará o setor selecionado
+    loadSectors(selectedChannel.canalId, false);
     
     if (selectedChannel.type === 4) {
       if (templatesCacheRef.current[selectedChannel.canalId]) {setTemplates(templatesCacheRef.current[selectedChannel.canalId]);
@@ -302,11 +301,26 @@ export default function StartAttendanceContent({
     }
   };
 
-  const loadSectors = async (canalId: string) => {
+  const loadSectors = async (canalId: string, forceReload: boolean = false) => {
     if (!selectedChannel) return;
     
     const cacheKey = `${canalId}_${selectedChannel.organizacaoId}`;
-    if (sectorsCacheRef.current[cacheKey]) {setSectors(sectorsCacheRef.current[cacheKey]);
+    
+    // Se existe cache e não estamos forçando recarregamento, usar o cache
+    if (!forceReload && sectorsCacheRef.current[cacheKey]) {
+      const cachedSectors = sectorsCacheRef.current[cacheKey];
+      setSectors(cachedSectors);
+      
+      // Restaurar o setor selecionado após carregar do cache
+      if (selectedSectorId && !selectedSector) {
+        const sector = cachedSectors.find(s => s.id === selectedSectorId);
+        if (sector) {
+          setSelectedSector(sector);
+        } else {
+          // Se o setor não foi encontrado, limpar o ID persistido
+          setSelectedSectorId(null);
+        }
+      }
       return;
     }
 
@@ -323,6 +337,17 @@ export default function StartAttendanceContent({
 
       sectorsCacheRef.current[cacheKey] = filtered;
       setSectors(filtered);
+      
+      // Restaurar o setor selecionado após carregar
+      if (selectedSectorId && !selectedSector) {
+        const sector = filtered.find(s => s.id === selectedSectorId);
+        if (sector) {
+          setSelectedSector(sector);
+        } else {
+          // Se o setor não foi encontrado, limpar o ID persistido
+          setSelectedSectorId(null);
+        }
+      }
     } catch (err) {if (window.WlExtension?.alert) {
         window.WlExtension.alert({
           message: 'Erro ao carregar setores. Tente novamente.',
